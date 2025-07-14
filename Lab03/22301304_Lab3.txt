@@ -1,0 +1,285 @@
+//CS223-03 Lab 03
+//Nabeeha Khan
+//22301304
+
+
+`timescale 1ns / 1ps
+
+//2 to 4 decoder 
+module decoder2to4(input logic A, B, EN, output logic D0, D1, D2, D3);
+    assign D0 = ~A & ~B & EN;
+    assign D1 = ~A & B & EN;
+    assign D2 = A & ~B & EN;
+    assign D3 = A & B & EN;
+endmodule
+
+//2 to 4 decoder testbench
+module decoder2to4_TB();
+    logic A, B, EN, D0, D1, D2, D3;
+    decoder2to4 mod(A, B, EN, D0, D1, D2, D3);
+    initial begin
+        A = 0; B = 0; EN = 0; #10;
+        A = 0; B = 1; EN = 0; #10;
+        A = 1; B = 0; EN = 0; #10;
+        A = 1; B = 1; EN = 0; #10;
+        A = 0; B = 0; EN = 1; #10;
+        A = 0; B = 1; EN = 1; #10;
+        A = 1; B = 0; EN = 1; #10;
+        A = 1; B = 1; EN = 1; #10;
+    end
+endmodule
+
+##constraints for 2 to 4 decoder
+#Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {B}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports {A}]
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33 } [get_ports {EN}]
+
+#LEDS
+set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33 } [get_ports {D0}]
+set_property -dict {PACKAGE_PIN E19 IOSTANDARD LVCMOS33 } [get_ports {D1}]
+set_property -dict {PACKAGE_PIN U19 IOSTANDARD LVCMOS33 } [get_ports {D2}]
+set_property -dict {PACKAGE_PIN V19 IOSTANDARD LVCMOS33 } [get_ports {D3}]
+
+
+//g Function implementation
+module gFunction(input logic w1, w2, w3, output logic g);
+    logic l0, l1, l2, l3;
+    assign l0 = w2 ^ w3;
+    assign l1 = w2 | w3;
+    assign l2 = l0 & ~w1;
+    assign l3 = l1 & w1;
+    assign g = l2 | l3;
+endmodule
+
+//g Function implementation testbench
+module gFunction_TB();
+    logic w1, w2, w3, g;
+    gFunction mod(w1, w2, w3, g);
+    initial begin
+        w1 = 0; w2 = 0; w3 = 0; #10;
+        w1 = 0; w2 = 0; w3 = 1; #10;
+        w1 = 0; w2 = 1; w3 = 0; #10;
+        w1 = 0; w2 = 1; w3 = 1; #10;
+        w1 = 1; w2 = 0; w3 = 0; #10;
+        w1 = 1; w2 = 0; w3 = 1; #10;
+        w1 = 1; w2 = 1; w3 = 0; #10;
+        w1 = 1; w2 = 1; w3 = 1; #10;
+    end
+endmodule
+
+##Constraints for g Function
+#Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {w3}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports {w2}]
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33 } [get_ports {w1}]
+
+#LEDS
+set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33 } [get_ports {g}]
+
+//Two input AND
+module and2input(input logic a, b, output logic y);
+    assign y = a & b;
+endmodule
+
+//Two input OR
+module or2input(input logic a, b, output logic y);
+    assign y = a | b;
+endmodule
+
+//4 to 1 mux
+module mux4to1(input logic I0, I1, I2, I3, S0, S1, output logic Y);
+    logic l0, l1;
+    assign l0 = (~S0 & I0) | (S0 & I1);
+    assign l1 = (~S0 & I2) | (S0 & I3);
+    assign Y = (~S1 & l0) | (S1 & l1);
+endmodule
+
+//8 to 1 mux
+module mux8to1(input logic I0, I1, I2, I3, I4, I5, I6, I7, S2, S1, S0, output logic Y);
+    logic l1, l2, l3, l4;
+    mux4to1 mux1(I0, I1, I2, I3, S0, S1, l1);
+    mux4to1 mux2(I4, I5, I6, I7, S0, S1, l2);
+    and2input and1(l1, ~S2, l3);
+    and2input and2(l2, S2, l4); 
+    or2input or1(l3, l4, Y); 
+endmodule
+
+//8 to 1 mux testbench
+module mux8to1_TB();
+    logic I0, I1, I2, I3, I4, I5, I6, I7, S2, S1, S0, Y;
+    mux8to1 mod(I0, I1, I2, I3, I4, I5, I6, I7, S2, S1, S0, Y);
+    initial begin
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 0; S0 = 0; #10;
+        I0 = 1; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 0; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 0; S0 = 1; #10;
+        I0 = 0; I1 = 1; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 0; S0 = 1; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 1; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 1; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 1; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 1; S0 = 1; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 1; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =0; S1 = 1; S0 = 1; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =1; S1 = 0; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 1; I5 = 0; I6 = 0; I7 = 0; S2 =1; S1 = 0; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =1; S1 = 0; S0 = 1; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 1; I6 = 0; I7 = 0; S2 =1; S1 = 0; S0 = 1; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =1; S1 = 1; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 1; I7 = 0; S2 =1; S1 = 1; S0 = 0; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 0; S2 =1; S1 = 1; S0 = 1; #10;
+        I0 = 0; I1 = 0; I2 = 0; I3 = 0; I4 = 0; I5 = 0; I6 = 0; I7 = 1; S2 =1; S1 = 1; S0 = 1; #10;
+    end
+endmodule
+
+##Constraints for 8 to 1 mux
+#Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {I0}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports {I1}]
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33 } [get_ports {I2}]
+set_property -dict {PACKAGE_PIN W17 IOSTANDARD LVCMOS33 } [get_ports {I3}]
+set_property -dict {PACKAGE_PIN W15 IOSTANDARD LVCMOS33 } [get_ports {I4}]
+set_property -dict {PACKAGE_PIN V15 IOSTANDARD LVCMOS33 } [get_ports {I5}]
+set_property -dict {PACKAGE_PIN W14 IOSTANDARD LVCMOS33 } [get_ports {I6}]
+set_property -dict {PACKAGE_PIN W13 IOSTANDARD LVCMOS33 } [get_ports {I7}]
+set_property -dict {PACKAGE_PIN T3 IOSTANDARD LVCMOS33 } [get_ports {S0}]
+set_property -dict {PACKAGE_PIN T2 IOSTANDARD LVCMOS33 } [get_ports {S1}]
+set_property -dict {PACKAGE_PIN R3 IOSTANDARD LVCMOS33 } [get_ports {S2}]
+
+#LEDS
+set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33 } [get_ports {Y}]
+
+
+//F function 
+module Ffunction(input logic A, B, C, D, E, output logic F);
+    logic EN, D0, D1, D2, D3;
+    assign EN = 1'b1;
+    decoder2to4 decoder(D, E, EN, D0, D1, D2, D3);
+    mux8to1 mux(1'b1, D0, D, 1'b0, 1'b1, 1'b0, D1, ~D, A, B, C, F);
+endmodule
+
+//F function testbench
+module Ffunction_TB();
+    logic A, B, C, D, E, F;
+    Ffunction mod(A,B,C,D,E,F);
+    initial begin
+        A = 0; B = 0; C = 0; D = 0; E = 0; #10;
+        A = 0; B = 0; C = 0; D = 0; E = 1; #10;
+        A = 0; B = 0; C = 0; D = 1; E = 0; #10;
+        A = 0; B = 0; C = 0; D = 1; E = 1; #10;
+        A = 0; B = 0; C = 1; D = 0; E = 0; #10;
+        A = 0; B = 0; C = 1; D = 0; E = 1; #10;
+        A = 0; B = 0; C = 1; D = 1; E = 0; #10;
+        A = 0; B = 0; C = 1; D = 1; E = 1; #10;
+        A = 0; B = 1; C = 0; D = 0; E = 0; #10;
+        A = 0; B = 1; C = 0; D = 0; E = 1; #10;
+        A = 0; B = 1; C = 0; D = 1; E = 0; #10;
+        A = 0; B = 1; C = 0; D = 1; E = 1; #10;
+        A = 0; B = 1; C = 1; D = 0; E = 0; #10;
+        A = 0; B = 1; C = 1; D = 0; E = 1; #10;
+        A = 0; B = 1; C = 1; D = 1; E = 0; #10;
+        A = 0; B = 1; C = 1; D = 1; E = 1; #10;
+        A = 1; B = 0; C = 0; D = 0; E = 0; #10;
+        A = 1; B = 0; C = 0; D = 0; E = 1; #10;
+        A = 1; B = 0; C = 0; D = 1; E = 0; #10;
+        A = 1; B = 0; C = 0; D = 1; E = 1; #10;
+        A = 1; B = 0; C = 1; D = 0; E = 0; #10;
+        A = 1; B = 0; C = 1; D = 0; E = 1; #10;
+        A = 1; B = 0; C = 1; D = 1; E = 0; #10;
+        A = 1; B = 0; C = 1; D = 1; E = 1; #10;
+        A = 1; B = 1; C = 0; D = 0; E = 0; #10;
+        A = 1; B = 1; C = 0; D = 0; E = 1; #10;
+        A = 1; B = 1; C = 0; D = 1; E = 0; #10;
+        A = 1; B = 1; C = 0; D = 1; E = 1; #10;
+        A = 1; B = 1; C = 1; D = 0; E = 0; #10;
+        A = 1; B = 1; C = 1; D = 0; E = 1; #10;
+        A = 1; B = 1; C = 1; D = 1; E = 0; #10;
+        A = 1; B = 1; C = 1; D = 1; E = 1; #10;
+    end
+endmodule
+
+##F function
+#Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {E}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports {D}]
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33 } [get_ports {C}]
+set_property -dict {PACKAGE_PIN W17 IOSTANDARD LVCMOS33 } [get_ports {B}]
+set_property -dict {PACKAGE_PIN W15 IOSTANDARD LVCMOS33 } [get_ports {A}]
+
+#LEDS
+set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33 } [get_ports {F}]
+
+
+//Bit Shifter
+module bitShifter(input logic s, w3, w2, w1, w0, output logic y3, y2, y1, y0, k);
+    always_comb begin
+        if(s) begin
+            y3 = 1'b0;
+            y2 = w3;
+            y1 = w2; 
+            y0 = w1;
+            k = w0;
+        end
+        else begin 
+            y3 = w3;
+            y2 = w2;
+            y1 = w1; 
+            y0 = w0;
+            k = 1'b0;
+        end
+    end
+endmodule
+
+//Bit Shifter testbench
+module bitShifter_TB();
+    logic s, w3, w2, w1, w0,y3, y2, y1, y0, k;
+    bitShifter mod(s, w3, w2, w1, w0,y3, y2, y1, y0, k);
+    initial begin
+        s = 0; w3 = 0; w2 = 0; w1 = 0; w0 = 0; #10;
+        s = 0; w3 = 0; w2 = 0; w1 = 0; w0 = 1; #10;
+        s = 0; w3 = 0; w2 = 0; w1 = 1; w0 = 0; #10;
+        s = 0; w3 = 0; w2 = 0; w1 = 1; w0 = 1; #10;
+        s = 0; w3 = 0; w2 = 1; w1 = 0; w0 = 0; #10;
+        s = 0; w3 = 0; w2 = 1; w1 = 0; w0 = 1; #10;
+        s = 0; w3 = 0; w2 = 1; w1 = 1; w0 = 0; #10;
+        s = 0; w3 = 0; w2 = 1; w1 = 1; w0 = 1; #10;
+        s = 0; w3 = 1; w2 = 0; w1 = 0; w0 = 0; #10;
+        s = 0; w3 = 1; w2 = 0; w1 = 0; w0 = 1; #10;
+        s = 0; w3 = 1; w2 = 0; w1 = 1; w0 = 0; #10;
+        s = 0; w3 = 1; w2 = 0; w1 = 1; w0 = 1; #10;
+        s = 0; w3 = 1; w2 = 1; w1 = 0; w0 = 0; #10;
+        s = 0; w3 = 1; w2 = 1; w1 = 0; w0 = 1; #10;
+        s = 0; w3 = 1; w2 = 1; w1 = 1; w0 = 0; #10;
+        s = 0; w3 = 1; w2 = 1; w1 = 1; w0 = 1; #10;
+        s = 1; w3 = 0; w2 = 0; w1 = 0; w0 = 0; #10;
+        s = 1; w3 = 0; w2 = 0; w1 = 0; w0 = 1; #10;
+        s = 1; w3 = 0; w2 = 0; w1 = 1; w0 = 0; #10;
+        s = 1; w3 = 0; w2 = 0; w1 = 1; w0 = 1; #10;
+        s = 1; w3 = 0; w2 = 1; w1 = 0; w0 = 0; #10;
+        s = 1; w3 = 0; w2 = 1; w1 = 0; w0 = 1; #10;
+        s = 1; w3 = 0; w2 = 1; w1 = 1; w0 = 0; #10;
+        s = 1; w3 = 0; w2 = 1; w1 = 1; w0 = 1; #10;
+        s = 1; w3 = 1; w2 = 0; w1 = 0; w0 = 0; #10;
+        s = 1; w3 = 1; w2 = 0; w1 = 0; w0 = 1; #10;
+        s = 1; w3 = 1; w2 = 0; w1 = 1; w0 = 0; #10;
+        s = 1; w3 = 1; w2 = 0; w1 = 1; w0 = 1; #10;
+        s = 1; w3 = 1; w2 = 1; w1 = 0; w0 = 0; #10;
+        s = 1; w3 = 1; w2 = 1; w1 = 0; w0 = 1; #10;
+        s = 1; w3 = 1; w2 = 1; w1 = 1; w0 = 0; #10;
+        s = 1; w3 = 1; w2 = 1; w1 = 1; w0 = 1; #10;
+    end
+endmodule
+
+##Bit shifter
+#Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {w0}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports {w1}]
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33 } [get_ports {w2}]
+set_property -dict {PACKAGE_PIN W17 IOSTANDARD LVCMOS33 } [get_ports {w3}]
+set_property -dict {PACKAGE_PIN W15 IOSTANDARD LVCMOS33 } [get_ports {s}]
+
+#LEDS
+set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS33 } [get_ports {y0}]
+set_property -dict {PACKAGE_PIN E19 IOSTANDARD LVCMOS33 } [get_ports {y1}]
+set_property -dict {PACKAGE_PIN U19 IOSTANDARD LVCMOS33 } [get_ports {y2}]
+set_property -dict {PACKAGE_PIN V19 IOSTANDARD LVCMOS33 } [get_ports {y3}]
+set_property -dict {PACKAGE_PIN U15 IOSTANDARD LVCMOS33 } [get_ports {k}]
+
+
