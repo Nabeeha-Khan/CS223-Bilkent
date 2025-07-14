@@ -1,0 +1,330 @@
+//Nabeeha Khan
+//22301304
+//CS223-03 Lab 05
+//////////////////////////////////////////////////////////////
+
+//Module for clock divider for traffic light system
+module clock_cycle( input logic clk, output logic clk_div ); 
+	localparam constantNumber = 150000000; 
+	logic [31:0] count; 
+ 
+	always @(posedge(clk)) begin 
+		if (count == constantNumber - 1) 
+        		count <= 32'b0; 
+    		else 
+        		count <= count + 1; 
+	end 
+ 
+	always @ (posedge(clk)) begin 
+    		if (count == constantNumber - 1) 
+        		clk_div <= ~clk_div; 
+		else 
+        		clk_div <= clk_div; 
+	end
+endmodule 
+ 
+
+//Module for Traffic Lights System
+module TrafficLights(input logic clk, reset, sa, sb,  
+                    output logic [2:0] la, lb); 
+    logic clkslow; 
+    clock_cycle clksl(clk, clkslow); 
+
+    typedef enum logic [2:0] {s0, s1, s2, s3, s4, s5, s6, s7} Statetype; 
+    Statetype [1:0] state, nextstate; 
+
+    parameter g = 3'b011; 
+    parameter y = 3'b001; 
+    parameter r = 3'b111; 
+
+    always_ff @(posedge clkslow, posedge reset) 
+        if(reset) state <= s0; 
+        else state <= nextstate; 
+
+    always_comb 
+    case(state) 
+        s0: if(sb) nextstate = s1; 
+            else   nextstate = s0; 
+        s1:        nextstate = s2; 
+        s2:        nextstate = s3; 
+        s3:        nextstate = s4; 
+        s4: if(sa) nextstate = s5; 
+            else   nextstate = s4; 
+        s5:        nextstate = s6; 
+        s6:        nextstate = s7; 
+        s7:        nextstate = s0; 
+        default:   nextstate = s0; 
+    endcase 
+
+    always_comb 
+    case(state) 
+        s0:      {la, lb} = {g, r}; 
+        s1:      {la, lb} = {y, r}; 
+        s2:      {la, lb} = {r, r}; 
+        s3:      {la, lb} = {r, y}; 
+        s4:      {la, lb} = {r, g};
+        s5:      {la, lb} = {r, y}; 
+        s6:      {la, lb} = {r, r}; 
+        s7:	 {la, lb} = {y, r}; 
+        default: {la, lb} = {g, r}; 
+    endcase  
+endmodule 
+
+//Testbench for Traffic Light System
+module TrafficLight_TB();
+    logic clk, reset, sa, sb;
+    logic [2:0] la;
+    logic [2:0] lb;
+    
+    TrafficLights dut(clk, reset, sa, sb, la, lb);
+    
+    always
+        begin
+            clk <= 1; #5;
+            clk <= 0; #5;
+        end
+    
+    initial
+        begin
+            reset <= 1; #20;
+            reset <= 0; #20;
+            sa <= 1; sb <= 0; #100;   
+            sa <= 0; sb <= 0; #100;    
+            sa <= 0; sb <= 1; #100;          
+            sa <= 1; sb <= 1; #100;              
+        end    
+endmodule
+
+##Constraints for traffic light system
+# Clock signal
+set_property PACKAGE_PIN W5 [get_ports clk]							
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+create_clock -name clk100MHz -period 10.0 [get_ports clk]
+
+# Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {reset}]					
+ 
+# LEDs
+set_property -dict {PACKAGE_PIN V3 IOSTANDARD LVCMOS33 } [get_ports {la[0]}]					
+set_property -dict {PACKAGE_PIN W3 IOSTANDARD LVCMOS33 } [get_ports {la[1]}]					
+set_property -dict {PACKAGE_PIN U3 IOSTANDARD LVCMOS33 } [get_ports {la[2]}]					
+set_property -dict {PACKAGE_PIN N3 IOSTANDARD LVCMOS33 } [get_ports {lb[0]}]
+set_property -dict {PACKAGE_PIN P1 IOSTANDARD LVCMOS33 } [get_ports {lb[1]}]					
+set_property -dict {PACKAGE_PIN L1 IOSTANDARD LVCMOS33 } [get_ports {lb[2]}]										
+				
+# Buttons
+set_property -dict {PACKAGE_PIN W19 IOSTANDARD LVCMOS33 } [get_ports {sa}]					
+set_property -dict {PACKAGE_PIN U18 IOSTANDARD LVCMOS33 } [get_ports {sb}]					
+
+/////////////////////////////////////////////////////////////////////////////
+
+//Module for clock divider
+module clock_cycle1Hz(
+    input logic clk,
+    output logic clk_div
+    );
+    
+    localparam constantNumber = 50000000; 
+    logic [31:0] count;
+    
+    always @(posedge clk)
+    begin
+        if (count == constantNumber - 1)
+            count <= 32'b0;
+        else
+            count <= count + 1;
+    end
+    
+    always @(posedge clk)
+    begin
+        if (count == constantNumber - 1)
+            clk_div <= ~clk_div;
+        else
+            clk_div <= clk_div;
+    end
+endmodule
+
+//Module for 16 bit upcounter register
+module upcountRegister(
+    input logic clk, reset, load_en, enable,
+    input logic [15:0] load,
+    output logic [15:0] q
+    );
+    
+    always_ff @(posedge clk) begin
+        if(reset) 
+            q <= 16'b0;
+        else if(load_en) 
+            q <= load;
+        else if(enable) 
+            q <= q + 1;
+    end 
+endmodule
+
+//Module for binary to grey code converter
+module binaryToGrey(
+    input logic [15:0] binary,
+    output logic [15:0] grey
+    );
+    
+    always_comb begin
+        grey[15] = binary[15];
+        grey[14] = binary[15] ^ binary[14];
+        grey[13] = binary[14] ^ binary[13];
+        grey[12] = binary[13] ^ binary[12];
+        grey[11] = binary[12] ^ binary[11];
+        grey[10] = binary[11] ^ binary[10];
+        grey[9] = binary[10] ^ binary[9];
+        grey[8] = binary[9] ^ binary[8];
+        grey[7] = binary[8] ^ binary[7];
+        grey[6] = binary[7] ^ binary[6];
+        grey[5] = binary[6] ^ binary[5];
+        grey[4] = binary[5] ^ binary[4];
+        grey[3] = binary[4] ^ binary[3];
+        grey[2] = binary[3] ^ binary[2];
+        grey[1] = binary[2] ^ binary[1];
+        grey[0] = binary[1] ^ binary[0];
+    end
+endmodule
+
+//Module for 16 bit grey code counter
+module greyCod16bit(
+    input logic clk, reset, load_en, enable,
+    input logic [15:0] load,
+    output logic [15:0] grey
+    );
+    
+    logic clk_slow;
+    clock_cycle1Hz clockdiv(clk, clk_slow);
+    
+    logic [15:0] binary;
+    upcountRegister register(clk_slow, reset, load_en, enable, load, binary);
+    
+    binaryToGrey converter(binary, grey);
+    
+endmodule
+
+//Module for one hexadecimal digit
+module hexto7segment (input logic [3:0] hex, output logic [6:0] segments);
+    always_comb begin
+        case (hex)
+        4'b0000: segments = 7'b1000000;
+        4'b0001: segments = 7'b1111001;
+        4'b0010: segments = 7'b0100100;
+        4'b0011: segments = 7'b0110000;
+        4'b0100: segments = 7'b0011001;
+        4'b0101: segments = 7'b0010010;
+        4'b0110: segments = 7'b0000010;
+        4'b0111: segments = 7'b1111000;
+        4'b1000: segments = 7'b0000000;
+        4'b1001: segments = 7'b0010000;
+        4'b1010: segments = 7'b0001000;
+        4'b1011: segments = 7'b0000011;
+        4'b1100: segments = 7'b1000110;
+        4'b1101: segments = 7'b0100001;
+        4'b1110: segments = 7'b0000110;
+        4'b1111: segments = 7'b0001110;
+        default: segments = 7'b1111111; // Default all off
+    endcase
+    end
+endmodule
+
+//Module for multidigit display
+module multiDigitDisplay(
+    input logic clk, reset, load_en,
+    input reg [15:0] load, 
+    output reg [6:0] seg, output reg [3:0] an
+    );
+    
+    reg [15:0] grey;
+    reg [1:0] active = 0;
+    integer refreshCount = 0;
+    wire [6:0] seg0, seg1, seg2, seg3;
+    
+    greyCod16bit register(clk, reset, load_en, 1'b1, load, grey);
+    
+    hexto7segment converter0(grey[3:0], seg0);
+    hexto7segment converter1(grey[7:4], seg1);
+    hexto7segment converter2(grey[11:8], seg2);
+    hexto7segment converter3(grey[15:12], seg3);
+
+    always @(posedge clk) begin
+        refreshCount <= refreshCount + 1;
+        if (refreshCount == 250000) begin
+            refreshCount <= 0;
+            active <= active + 1;
+            if (active == 3) active <= 0;
+        end
+    end
+
+always @(*)  begin
+        case (active)
+            2'b00: begin
+                seg = seg0;
+                an = 4'b1110;
+            end
+            2'b01: begin
+                seg = seg1;
+                an = 4'b1101;
+            end
+            2'b10: begin
+                seg = seg2;
+                an = 4'b1011;
+            end
+            2'b11: begin
+                seg = seg3;
+                an = 4'b0111;
+            end
+            default: begin
+                seg = 8'b11111111;
+                an = 4'b1111;
+            end
+        endcase
+    end
+    
+endmodule
+
+
+##Constraints for grey code counter display
+# Clock signal
+set_property PACKAGE_PIN W5 [get_ports clk]							
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+create_clock -name clk100MHz -period 10.0 [get_ports clk]
+
+# Switches
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33 } [get_ports {load[0]}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports {load[1]}]					
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33 } [get_ports {load[2]}]					
+set_property -dict {PACKAGE_PIN W17 IOSTANDARD LVCMOS33 } [get_ports {load[3]}]
+set_property -dict {PACKAGE_PIN W15 IOSTANDARD LVCMOS33 } [get_ports {load[4]}]
+set_property -dict {PACKAGE_PIN V15 IOSTANDARD LVCMOS33 } [get_ports {load[5]}]					
+set_property -dict {PACKAGE_PIN W14 IOSTANDARD LVCMOS33 } [get_ports {load[6]}]					
+set_property -dict {PACKAGE_PIN W13 IOSTANDARD LVCMOS33 } [get_ports {load[7]}]	
+set_property -dict {PACKAGE_PIN V2 IOSTANDARD LVCMOS33 } [get_ports {load[8]}]
+set_property -dict {PACKAGE_PIN T3 IOSTANDARD LVCMOS33 } [get_ports {load[9]}]					
+set_property -dict {PACKAGE_PIN T2 IOSTANDARD LVCMOS33 } [get_ports {load[10]}]					
+set_property -dict {PACKAGE_PIN R3 IOSTANDARD LVCMOS33 } [get_ports {load[11]}]	
+set_property -dict {PACKAGE_PIN W2 IOSTANDARD LVCMOS33 } [get_ports {load[12]}]
+set_property -dict {PACKAGE_PIN U1 IOSTANDARD LVCMOS33 } [get_ports {load[13]}]					
+set_property -dict {PACKAGE_PIN T1 IOSTANDARD LVCMOS33 } [get_ports {load[14]}]					
+set_property -dict {PACKAGE_PIN R2 IOSTANDARD LVCMOS33 } [get_ports {load[15]}]						
+												
+# Buttons
+set_property -dict {PACKAGE_PIN T18 IOSTANDARD LVCMOS33 } [get_ports {reset}]					
+set_property -dict {PACKAGE_PIN U18 IOSTANDARD LVCMOS33 } [get_ports {load_en}]					
+
+#7 segment display
+set_property -dict {PACKAGE_PIN W7 IOSTANDARD LVCMOS33 } [get_ports {seg[0]}]					
+set_property -dict {PACKAGE_PIN W6 IOSTANDARD LVCMOS33 } [get_ports {seg[1]}]					
+set_property -dict {PACKAGE_PIN U8 IOSTANDARD LVCMOS33 } [get_ports {seg[2]}]					
+set_property -dict {PACKAGE_PIN V8 IOSTANDARD LVCMOS33 } [get_ports {seg[3]}]					
+set_property -dict {PACKAGE_PIN U5 IOSTANDARD LVCMOS33 } [get_ports {seg[4]}]					
+set_property -dict {PACKAGE_PIN V5 IOSTANDARD LVCMOS33 } [get_ports {seg[5]}]					
+set_property -dict {PACKAGE_PIN U7 IOSTANDARD LVCMOS33 } [get_ports {seg[6]}]
+
+set_property -dict {PACKAGE_PIN U2 IOSTANDARD LVCMOS33 } [get_ports {an[0]}]					
+set_property -dict {PACKAGE_PIN U4 IOSTANDARD LVCMOS33 } [get_ports {an[1]}]					
+set_property -dict {PACKAGE_PIN V4 IOSTANDARD LVCMOS33 } [get_ports {an[2]}]					
+set_property -dict {PACKAGE_PIN W4 IOSTANDARD LVCMOS33 } [get_ports {an[3]}]
+
+
